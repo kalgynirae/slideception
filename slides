@@ -178,13 +178,17 @@ class TerminalRenderer(BaseRenderer):
         return self.render_inner(token)
 
 
+def format(content: str) -> str:
+    return markdown(content, TerminalRenderer)
+
+
 slides = []
 
 
 def slide(func) -> None:
     docstring = getdoc(func)
     assert docstring is not None
-    content = markdown("# " + docstring, TerminalRenderer)
+    content = format("# " + docstring)
     slides.append((content, func))
 
 
@@ -229,7 +233,7 @@ def slides_slide():
         f"sed -n '/^def slides_slide/,/^@slide/p' {FILE} | head -n-3",
         shell=True, stdout=PIPE, text=True,
     ).stdout
-    print(markdown(f"```python3\n{code}\n```", TerminalRenderer), end="")
+    print(format(f"```python3\n@slide\n{code}\n```"), end="")
 
 
 @slide
