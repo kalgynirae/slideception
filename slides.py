@@ -4,7 +4,6 @@ from __future__ import annotations
 import inspect
 import os.path
 import sys
-import time
 from contextlib import contextmanager
 from inspect import getdoc
 from pathlib import Path
@@ -179,9 +178,7 @@ def display_slides() -> None:
         progress = f"[{n}/{len(slides)}]"
         print(f"\x1b[30m{slidename:<{WIDTH - 10}}{progress:>10}\x1b[0m")
         print(content, end="")
-        start = time.monotonic()
-        func()
-        if time.monotonic() - start < 0.5:
+        wait()
+        if func.__code__.co_code != b"d\x01S\x00":
+            func()
             wait()
-
-

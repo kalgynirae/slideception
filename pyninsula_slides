@@ -40,7 +40,6 @@ def readline_slide():
     readline.parse_and_bind("tab: complete")
     ```
     """
-    wait()
     print(format_slide("`input()` **without** readline:").rstrip("\n"))
     try:
         input(">>> ")
