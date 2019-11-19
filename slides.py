@@ -42,12 +42,12 @@ BASHRC_TEMPLATE = """
 """
 
 
-def bash(history: List[str] = None, extrarc: List[str] = None) -> None:
+def bash(history: List[str] = None, init: List[str] = None) -> None:
     if history is None:
         history = []
-    if extrarc is None:
-        extrarc = []
-    extrarc_lines = "\n".join(extrarc)
+    if init is None:
+        init = []
+    extrarc_lines = "\n".join(init)
     with TemporaryDirectory(prefix="slides-bash") as dir:
         histfile = Path(dir) / "history"
         histfile.write_text("".join(f"{e}\n" for e in history))

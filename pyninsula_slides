@@ -15,11 +15,47 @@ from slides import (
 
 @slide
 def title():
-    """Using Python for Efficiency (and Fun!)"""
+    """Using Python for Efficiency (and Fun!)
+
+    ```
+                _________      _                          
+          ___  / __/ __(_)____(_)__  ____  _______  __    
+         / _ \/ /_/ /_/ / ___/ / _ \/ __ \/ ___/ / / /    
+        /  __/ __/ __/ / /__/ /  __/ / / / /__/ /_/ /     
+        \___/_/ /_/ /_/\___/_/\___/_/ /_/\___/\__, /      
+                                             /____/       
+                 (  a l s o    f u n  )                   
+    ```
+    """
     bash(
-        history=["pwd", "whoami"],
-        extrarc=['pwd() { (( $# == 0 )) && echo /facebook || command pwd "$@"; }'],
+        history=["pwd", "whoami"], init=["cd /facebook"],
     )
+
+
+@slide
+def unscramble():
+    """Unscramble
+
+    I wrote a word unscrambler in Python.
+
+    * Great for puzzle-solving
+    * Slower than most unscramble websites
+    * But the results are more usable
+    * I can easily tweak the algorithm if needed
+    """
+    bash(history=["e ~/bin/unscramble", "unscramble eemertapurt"])
+
+
+@slide
+def bash_history():
+    """A quick note about bash history
+
+    Learning to recall history effectively is *very* helpful.
+
+    * **Ctrl+R** for reverse incremental search
+    * **Up**/**Down** for prefix matching
+    """
+    bash(history=["echo show dotfiles branches, try searching for LAPTOP"])
 
 
 @slide
@@ -60,10 +96,11 @@ def readline_inputrc():
     Readline can be configured in `~/.inputrc`.
 
     ```bash
+    "\e[A":history-search-backward
+    "\e[B":history-search-forward
+
     set blink-matching-paren on
     set colored-completion-prefix on
-    set completion-ignore-case on
-    set completion-map-case on
     set enable-bracketed-paste on
     ```
     """
@@ -88,6 +125,45 @@ def pythonstartup():
     ```
     """
     bash(history=["e ~/.pythonrc", "printenv PYTHONSTARTUP"])
+
+
+@slide
+def colorize():
+    """colorize
+
+    I made a script to colorize text based on common prefixes.
+
+    * Useful for visually inspecting command output
+    * Super straightforward to write in Python
+
+    ```python3
+    for color, (key, lines) in zip(
+        cycle_colors(), groupby(sys.stdin, key=key)
+    ):
+        for line in lines:
+            print(f"{color}{line}")
+    ```
+    """
+    bash(
+        history=["cat data | hl sorting-algorithms | l", "l data"],
+        init=["cd ~/colorize-example"],
+    )
+
+
+@slide
+def rofi_bookmarks():
+    """rofi-bookmarks
+
+    I made a script to load my Firefox bookmarks into Rofi.
+
+    * Rofi provides a nice UI and fuzzy search
+    * **Enter** to open
+    * **Alt+c** to copy
+    * **Alt+m** to copy Markdown syntax
+    """
+    print("(show recipe example)")
+    wait(True)
+    bash(history=["e ~/bin/rofi-bookmarks"])
 
 
 @slide
