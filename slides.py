@@ -4,12 +4,15 @@ from __future__ import annotations
 import inspect
 import os.path
 import sys
+import time
+from code import interact
 from contextlib import contextmanager
 from inspect import getdoc
 from pathlib import Path
 from shutil import get_terminal_size
 from subprocess import PIPE, run
-from typing import cast
+from tempfile import TemporaryDirectory
+from typing import List, cast
 
 from boxing import boxing
 from IPython import start_ipython
@@ -26,24 +29,56 @@ FILE = sys.argv[0]
 NAME = os.path.basename(FILE)
 WIDTH, _ = get_terminal_size()
 
-config = Config()
-config.TerminalInteractiveShell.confirm_exit = False
-config.TerminalIPythonApp.display_banner = False
+CONFIG = Config()
+CONFIG.TerminalInteractiveShell.confirm_exit = False
+CONFIG.TerminalIPythonApp.display_banner = False
+
+BASHRC_TEMPLATE = """
+    source ~/.bashrc
+    PS1="${{reset}}▶▶▶ ${{color}}\\u@pyninsula:\\W${{reset}}${{git_ps1}} ${{black}}[\\$((++_command_count))]${{reset}}\\n[\\j]\\\\$ "
+    history -r
+    HISTFILE={histfile}
+    {extrarc_lines}
+"""
 
 
-def bash() -> None:
-    run(["bash", "-i"])
+def bash(history: List[str] = None, extrarc: List[str] = None) -> None:
+    if history is None:
+        history = []
+    if extrarc is None:
+        extrarc = []
+    extrarc_lines = "\n".join(extrarc)
+    with TemporaryDirectory(prefix="slides-bash") as dir:
+        histfile = Path(dir) / "history"
+        histfile.write_text("".join(f"{e}\n" for e in history))
+        bashrc = Path(dir) / "bashrc"
+        bashrc.write_text(
+            BASHRC_TEMPLATE.format(histfile=histfile, extrarc_lines=extrarc_lines)
+        )
+        run(["bash", "--rcfile", str(bashrc), "-i"])
 
 
 def ipython(locals=None, /) -> None:
-    start_ipython(config=config, user_ns=locals)
+    start_ipython(config=CONFIG, user_ns=locals)
 
 
-def wait() -> None:
+def python(locals=None, /) -> None:
+    interact(local=locals, banner="", exitmsg="")
+
+
+def wait(more: bool = False) -> None:
+    print("\x1b[6 q", end="")  # bar cursor
+    prompt = "…" if more else "»"
     try:
-        input("\x1b[30m>\x1b[0m ")
+        input(f"\x1b[30m{prompt}\x1b[0m")
     except EOFError:
+        print(end="\r")
         pass
+    except KeyboardInterrupt:
+        print()
+        raise
+    finally:
+        print("\x1b[2 q", end="")  # block cursor
 
 
 class Kalgykai(Style):
@@ -162,8 +197,8 @@ def flair():
     try:
         yield
     except KeyboardInterrupt:
-        print()
         print("Slides CANCEL!!!")
+        sys.exit(1)
     except Exception:
         print("Slides FAIL!!!")
         raise
@@ -172,13 +207,14 @@ def flair():
 
 
 def display_slides() -> None:
+    print("\x1b[2 q", end="")  # block cursor
     for n, (content, func) in enumerate(slides, start=1):
         run(["clear", "-x"])
         slidename = f"{NAME}.{func.__name__}"
         progress = f"[{n}/{len(slides)}]"
         print(f"\x1b[30m{slidename:<{WIDTH - 10}}{progress:>10}\x1b[0m")
         print(content, end="")
-        wait()
         if func.__code__.co_code != b"d\x01S\x00":
+            wait(more=True)
             func()
-            wait()
+        wait()

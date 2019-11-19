@@ -1,0 +1,28 @@
+#!/home/colinchan/talk/env/bin/python3
+
+from slides import bash, display_slides, flair, format_slide, slide, wait
+
+
+@slide
+def colortest():
+    """Testing code highlighting
+
+    ```bash
+    #!/bin/bash
+    set -o pipefail
+    if [[ "$foo" == bar ]]; then
+      exec sleep 5
+    fi
+    ```
+
+    ```python3
+    from itertools import chain
+    print(f"{foo}\\n is {bar}")
+    @foo
+    def bar(a: int = None, b: bool = False) -> Optional[int]:
+        raise ValueError()
+    ```
+    """
+
+with flair():
+    display_slides()

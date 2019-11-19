@@ -1,29 +1,25 @@
 #!/home/colinchan/talk/env/bin/python3
 import inspect
 
-from slides import bash, display_slides, flair, format_slide, slide, wait
+from slides import (
+    bash,
+    display_slides,
+    flair,
+    format_slide,
+    ipython,
+    python,
+    slide,
+    wait,
+)
 
 
 @slide
-def colortest():
-    """Testing code highlighting
-
-    ```bash
-    #!/bin/bash
-    set -o pipefail
-    if [[ "$foo" == bar ]]; then
-      exec sleep 5
-    fi
-    ```
-
-    ```python3
-    from itertools import chain
-    print(f"{foo}\\n is {bar}")
-    @foo
-    def bar(a: int = None, b: bool = False) -> Optional[int]:
-        raise ValueError()
-    ```
-    """
+def title():
+    """Using Python for Efficiency (and Fun!)"""
+    bash(
+        history=["pwd", "whoami"],
+        extrarc=['pwd() { (( $# == 0 )) && echo /facebook || command pwd "$@"; }'],
+    )
 
 
 @slide
@@ -34,25 +30,45 @@ def readline_slide():
 
     * tab completion
     * history
+    * editing shortcuts
 
     ```python3
     import readline, rlcompleter
     readline.parse_and_bind("tab: complete")
     ```
     """
-    print(format_slide("`input()` **without** readline:").rstrip("\n"))
+    print(format_slide("Prompt **without** readline:").rstrip("\n"))
     try:
         input(">>> ")
     except (EOFError, KeyboardInterrupt):
         print()
+        pass
+
     import readline
     import rlcompleter
+
+    readline.parse_and_bind("set show-mode-in-prompt off")
     readline.parse_and_bind("tab: complete")
-    print(format_slide("`input()` **with** readline:").rstrip("\n"))
-    try:
-        input(">>> ")
-    except (EOFError, KeyboardInterrupt):
-        print()
+    print(format_slide("Prompt **with** readline:").rstrip("\n"))
+    python()
+
+
+@slide
+def readline_inputrc():
+    """Readline
+
+    Readline can be configured in `~/.inputrc`.
+
+    ```bash
+    set blink-matching-paren on
+    set colored-completion-prefix on
+    set completion-ignore-case on
+    set completion-map-case on
+    set enable-bracketed-paste on
+    ```
+    """
+    python()
+    ipython()
 
 
 @slide
@@ -63,22 +79,19 @@ def pythonstartup():
     sessions.
 
     * Import things you use frequently
-    * Enable readline
+    * ~~Enable readline~~
 
     ```python3
+    from datetime import date, datetime, timedelta
     from random import choice, sample
-    from shlex import quote
     parser = argparse.ArgumentParser()
     ```
-
-    ```python3
-    ```
     """
-    bash()
+    bash(history=["e ~/.pythonrc", "printenv PYTHONSTARTUP"])
 
 
 @slide
-def slides_slide():
+def slides_demo():
     """Slides in the terminal
 
     I made a slide renderer in Python (for this talk).
@@ -86,12 +99,12 @@ def slides_slide():
     * Slides are **functions** with content in the docstring
     * Then you can run *arbitrary code*!
     """
-    code = inspect.getsource(slides_slide)
+    code = inspect.getsource(slides_demo)
     print(format_slide(f"```python3\n{code}\n```"), end="")
 
 
 @slide
-def slides_issues():
+def slides_known_issues():
     """Slides in the terminal
 
     Incomplete list of things that don’t work yet:
