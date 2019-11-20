@@ -35,7 +35,6 @@ CONFIG.TerminalIPythonApp.display_banner = False
 
 BASHRC_TEMPLATE = """
     source ~/.bashrc
-    PS1="${{reset}}▶▶▶ ${{color}}\\u@pyninsula:\\W${{reset}}${{git_ps1}} ${{black}}[\\$((++_command_count))]${{reset}}\\n[\\j]\\\\$ "
     history -r
     HISTFILE={histfile}
     {extrarc_lines}
@@ -66,7 +65,7 @@ def python(locals=None, /) -> None:
     interact(local=locals, banner="", exitmsg="")
 
 
-def wait(more: bool = False) -> None:
+def wait(more: bool = True) -> None:
     print("\x1b[6 q", end="")  # bar cursor
     prompt = "…" if more else "»"
     try:
@@ -215,6 +214,8 @@ def display_slides() -> None:
         print(f"\x1b[30m{slidename:<{WIDTH - 10}}{progress:>10}\x1b[0m")
         print(content, end="")
         if func.__code__.co_code != b"d\x01S\x00":
-            wait(more=True)
+            wait()
             func()
-        wait()
+            time.sleep(0.5)
+        else:
+            wait(more=False)

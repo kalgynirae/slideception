@@ -1,0 +1,225 @@
+#!/home/colinchan/talk/env/bin/python3
+import inspect
+import sys
+from pathlib import Path
+
+from slides import (
+    bash,
+    display_slides,
+    flair,
+    format_slide,
+    ipython,
+    python,
+    slide,
+    wait,
+)
+
+socially_acceptable = __name__ == "__main__"
+
+
+@slide
+def title():
+   """Using Python for Efficiency (and Fun!)
+
+   ```
+                 _________      _                            
+           ___  / __/ __(_)____(_)__  ____  _______  __      
+          / _ \/ /_/ /_/ / ___/ / _ \/ __ \/ ___/ / / /      
+         /  __/ __/ __/ / /__/ /  __/ / / / /__/ /_/ /       
+         \___/_/ /_/ /_/\___/_/\___/_/ /_/\___/\__, /        
+                                              /____/         
+                  (  a l s o    f u n  )                     
+   ```
+   """
+   bash(
+       history=["pwd", "whoami"], init=["cd /facebook"],
+   )
+
+
+@slide
+def unscramble():
+   """Unscramble
+
+   I wrote a word unscrambler in Python.
+
+   * Great for puzzle-solving
+   * Slower than most unscramble websites
+   * But the results are more usable
+   * I can easily tweak the algorithm if needed
+   """
+   bash(history=["e ~/bin/unscramble", "unscramble eemertapurt | tail -n5"])
+
+
+@slide
+def bash_history():
+   """A quick note about bash history
+
+   Learning to recall history effectively is *very* helpful.
+
+   * **Ctrl+R** for reverse incremental search
+   * **Up**/**Down** for prefix matching
+   """
+   bash(history=["echo show dotfiles branches, try searching for LAPTOP"])
+
+
+@slide
+def readline_slide():
+   """Readline
+
+   Readline provides fancy line-editing on Linux.
+
+   * tab completion
+   * history
+   * editing shortcuts
+
+   ```python3
+   import readline, rlcompleter
+   readline.parse_and_bind("tab: complete")
+   ```
+   """
+   print(format_slide("Prompt **without** readline:").rstrip("\n"))
+   try:
+       input(">>> ")
+   except (EOFError, KeyboardInterrupt):
+       print()
+       pass
+
+   import readline
+   import rlcompleter
+
+   readline.parse_and_bind("set show-mode-in-prompt off")
+   readline.parse_and_bind("tab: complete")
+   print(format_slide("Prompt **with** readline:").rstrip("\n"))
+   python()
+
+
+@slide
+def readline_inputrc():
+   """Readline
+
+   Readline can be configured in `~/.inputrc`.
+
+   ```bash
+   "\e[A":history-search-backward
+   "\e[B":history-search-forward
+
+   set blink-matching-paren on
+   set colored-completion-prefix on
+   set enable-bracketed-paste on
+   ```
+   """
+   python()
+   ipython()
+
+
+@slide
+def pythonstartup():
+   """Customized interactive interpreter
+
+   By setting `PYTHONSTARTUP`, you can initialize your interactive
+   sessions.
+
+   * Import things you use frequently
+   * ~~Enable readline~~
+
+   ```python3
+   from datetime import date, datetime, timedelta
+   from random import choice, sample
+   parser = argparse.ArgumentParser()
+   ```
+   """
+   bash(history=["e ~/.pythonrc", "printenv PYTHONSTARTUP"])
+
+
+@slide
+def colorize():
+   """colorize
+
+   I made a script to colorize text based on common prefixes.
+
+   * Useful for visually inspecting command output
+   * Super straightforward to write in Python
+
+   ```python3
+   for color, (key, lines) in zip(
+       cycle_colors(), groupby(sys.stdin, key=key)
+   ):
+       for line in lines:
+           print(f"{color}{line}")
+   ```
+   """
+   bash(
+       history=["cat data | hl sorting-algorithms | l", "l data"],
+       init=["cd ~/colorize-example", "LESS=-RS"],
+   )
+
+
+@slide
+def rofi_bookmarks():
+   """rofi-bookmarks
+
+   I made a script to load my Firefox bookmarks into Rofi.
+
+   * Rofi provides a nice UI and fuzzy search
+   * **Enter** to open
+   * **Alt+c** to copy
+   * **Alt+m** to copy Markdown syntax
+   """
+   print("(show recipes example)")
+   wait()
+   bash(history=["e ~/bin/rofi-bookmarks"])
+
+
+@slide
+def slides_demo():
+   """Slides in the terminal
+
+   I made a slide renderer in Python (for this talk).
+
+   * Slides are **functions** with content in the docstring
+   * Then you can run *arbitrary code*!
+   """
+   code = inspect.getsource(slides_demo)
+   print(format_slide(f"```python3\n{code}\n```"), end="")
+   wait()
+   bash(history=["e efficiency_slides"], init=["cd ~/talk"])
+
+
+@slide
+def slides_known_issues():
+   """Slides in the terminal: issues
+
+   Incomplete list of things that don’t work yet:
+
+   ## Missing/broken slide formatting
+   * numbered lists
+   * nested lists (actually nested *anything*)
+   * blockquotes
+   * tables
+
+   ## Missing functionality
+   * go to previous slide
+   * jump to a specific slide
+   * resizing the window during the presentation
+   """
+
+
+@slide
+def slides_flair():
+    """Slides in the terminal: `with flair()`
+
+    Don't forget to **have fun** while coding!
+
+    ```python3
+    with flair():
+        display_slides()
+    ```
+    """
+    code = inspect.getsource(flair)
+    print(format_slide(f"```python3\n{code}\n```"), end="")
+    wait(more=False)
+
+
+if socially_acceptable:
+    with flair():
+        display_slides()
