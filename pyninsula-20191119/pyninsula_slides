@@ -8,7 +8,7 @@ from select import select
 from shlex import quote
 from subprocess import PIPE, STDOUT, Popen
 
-from slides import bash, display_slides, flair, format_slide, ipython, slide, wait
+from slideception import bash, display_slides, flair, format_slide, ipython, slide, wait
 
 
 @slide
@@ -22,7 +22,7 @@ def efficiency():
     * Type **Ctrl+L** to clear the screen (sneaky!)
     * Run the previous command from history.
     """
-    bash(history=["talk/efficiency_slides"], init=["cd ~"])
+    bash(history=["efficiency_slides"])
 
 
 @slide

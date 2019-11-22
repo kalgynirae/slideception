@@ -1,6 +1,6 @@
 #!/home/colinchan/talk/env/bin/python3
 
-from slides import bash, display_slides, flair, format_slide, slide, wait
+from slides import display_slides, flair, slide
 
 
 @slide

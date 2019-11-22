@@ -3,7 +3,7 @@ import inspect
 import sys
 from pathlib import Path
 
-from slides import (
+from slideception import (
     bash,
     display_slides,
     flair,
@@ -32,7 +32,7 @@ def title():
    ```
    """
    bash(
-       history=["pwd", "whoami"], init=["cd /facebook"],
+       history=["pwd", "whoami"], init=["mkdir -p facebook", "cd facebook"],
    )
 
 
@@ -150,7 +150,7 @@ def colorize():
    """
    bash(
        history=["cat data | hl sorting-algorithms | l", "l data"],
-       init=["cd ~/colorize-example", "LESS=-RS"],
+       init=["cd colorize-example", "LESS=-RS"],
    )
 
 
@@ -182,7 +182,7 @@ def slides_demo():
    code = inspect.getsource(slides_demo)
    print(format_slide(f"```python3\n{code}\n```"), end="")
    wait()
-   bash(history=["e efficiency_slides"], init=["cd ~/talk"])
+   bash(history=["e efficiency_slides"])
 
 
 @slide
