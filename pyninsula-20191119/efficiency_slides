@@ -14,8 +14,6 @@ from slideception import (
     wait,
 )
 
-socially_acceptable = __name__ == "__main__"
-
 
 @slide
 def title():
@@ -220,6 +218,5 @@ def slides_flair():
     wait(more=False)
 
 
-if socially_acceptable:
-    with flair():
-        display_slides()
+with flair():
+    display_slides()
