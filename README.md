@@ -25,7 +25,7 @@ def context_managers():
     with record_time() as timer:
         stuff()
     print(f"stuff took {timer.elapsed} seconds")
-    \```
+    ```
 
     It lets you factor out pieces of code that *surround* other code.
     """
