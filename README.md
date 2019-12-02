@@ -1,6 +1,9 @@
 # slideception
 
-A Python library for creating interactive presentations in Linux terminals.
+Slideception lets you give interactive presentations in the terminal. Slides are
+defined as Python functions, so you can run arbitrary code to generate content
+for your slides. You could even go so far as to run another presentation from
+within one of your slides!
 
 ## Requirements
 
