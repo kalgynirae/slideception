@@ -22,7 +22,7 @@ def efficiency():
     * Type **Ctrl+L** to clear the screen (sneaky!)
     * Run the previous command from history.
     """
-    bash(history=["efficiency_slides"])
+    bash(history=["./efficiency_slides"])
 
 
 @slide
@@ -54,7 +54,7 @@ def zen():
             b"\x1b[33;9mNamespaces\x1b[0m\x1b[32;4mNested slide decks\x1b[0m",
         ).replace(b"Python, by", b"Python, \x1b[3mmostly\x1b[23m by")
 
-    os.chdir("/home/colinchan/talk/zen")
+    os.chdir("zen")
     pty.spawn(["bash", "-i"], readpty)
 
 

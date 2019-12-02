@@ -32,7 +32,7 @@ def title():
    ```
    """
    bash(
-       history=["pwd", "whoami"], init=["mkdir -p facebook", "cd facebook"],
+       history=["pwd", "whoami"], init=["cd /facebook"],
    )
 
 
