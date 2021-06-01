@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import inspect
 import os.path
+import re
 import sys
 import time
 from code import interact
 from contextlib import contextmanager
+from functools import partial
 from inspect import getdoc
 from pathlib import Path
 from shutil import get_terminal_size
@@ -20,9 +22,11 @@ from mistletoe import markdown
 from mistletoe.base_renderer import BaseRenderer
 from pygments import highlight
 from pygments.formatters import TerminalTrueColorFormatter
+from pygments.formatters.terminal256 import EscapeSequence
 from pygments.lexers import Python3Lexer, get_lexer_by_name
 from pygments.style import Style
 from pygments.token import Token
+from pygments.util import ClassNotFound
 from traitlets.config import Config
 
 FILE = sys.argv[0]
@@ -39,6 +43,8 @@ BASHRC_TEMPLATE = """
     HISTFILE={histfile}
     {extrarc_lines}
 """
+
+SYSTEMD_KEYWORDS = set("minutely hourly daily oneshot exec notify".split())
 
 
 def bash(history: List[str] = None, init: List[str] = None) -> None:
@@ -97,6 +103,62 @@ class Kalgykai(Style):
     }
 
 
+def _esc(color: str, **kwargs) -> EscapeSequence:
+    val = int(color, 16)
+    r = (val >> 16) & 0xFF
+    g = (val >> 8) & 0xFF
+    b = (val >> 0) & 0xFF
+    return EscapeSequence(fg=(r, g, b), **kwargs).true_color_string()
+
+
+RESET = "\x1b[0m"
+SECTION = _esc("4e9a06", bold=True)
+OPTION = _esc("069e98")
+ESCAPE = _esc("c8742a", italic=True)
+PREFIX = _esc("ef4529", bold=True)
+KEYWORD = _esc("c4a800")
+TIME = _esc("3c74c0")
+COMMENT = _esc("52595c", italic=True)
+MANPAGE = _esc("6050b0", bold=True, italic=True)
+REPLACEMENT = _esc("c8742a", italic=True)
+
+
+def highlight_systemd(code: str) -> str:
+    def _format_value(val: str) -> str:
+        steps = [
+            # % escapes
+            partial(re.sub, r"(%\w)", fr"{ESCAPE}\1{RESET}"),
+            # prefixes
+            partial(re.sub, r"^(@|-|:|\+|!|!!)", fr"{PREFIX}\1{RESET}"),
+            # times
+            partial(
+                re.sub,
+                r"^(\d+(?:s|m|h|d|w|M|y))$",
+                fr"{TIME}\1{RESET}",
+            ),
+            # keywords
+            (lambda s: f"{KEYWORD}{s}{RESET}" if s in SYSTEMD_KEYWORDS else s),
+        ]
+        for step in steps:
+            val = step(val)
+        return val
+
+    formatted_lines = []
+    for line in code.splitlines():
+        color = None
+        if not line:
+            pass
+        elif line.startswith("["):
+            line = f"{SECTION}{line}{RESET}"
+        elif line.startswith("#"):
+            line = f"{COMMENT}{line}{RESET}"
+        else:
+            opt, val = line.split("=", maxsplit=1)
+            line = f"{OPTION}{opt}={RESET}" + _format_value(val)
+        formatted_lines.append(line)
+    return "\n".join(formatted_lines)
+
+
 class TerminalRenderer(BaseRenderer):
     def render_strong(self, token):
         return f"\x1b[1m{self.render_inner(token)}\x1b[22m"
@@ -105,15 +167,20 @@ class TerminalRenderer(BaseRenderer):
         return f"\x1b[3m{self.render_inner(token)}\x1b[23m"
 
     def render_inline_code(self, token):
-        return f"\x1b[33m{self.render_inner(token)}\x1b[39m".format(
-            self.render_inner(token)
-        )
+        return f"\x1b[33m{self.render_inner(token)}\x1b[39m"
 
     def render_raw_text(self, token, escape=True):
-        return token.content
+        content = token.content
+        for func in [
+            partial(re.sub, r"([\w.-]+\(\d\))", fr"{MANPAGE}\1{RESET}"),
+            partial(re.sub, r"({\w+})", fr"{REPLACEMENT}\1{RESET}"),
+            lambda s: s.replace("...", "…"),
+        ]:
+            content = func(content)
+        return content
 
     def render_strikethrough(self, token):
-        return f"\x1b[9m{self.render_inner(token)}\x1b[29m"
+        return f"\x1b[30m{self.render_inner(token)}\x1b[39m"
 
     def render_image(self, token):
         return f"[{token.src}]"
@@ -141,7 +208,9 @@ class TerminalRenderer(BaseRenderer):
 
     def render_block_code(self, token):
         code = self.render_inner(token)
-        if token.language:
+        if token.language == "systemd":
+            code = highlight_systemd(code)
+        elif token.language:
             lexer = get_lexer_by_name(token.language)
             formatter = TerminalTrueColorFormatter(style=Kalgykai)
             code = highlight(code, lexer, formatter)
@@ -205,11 +274,13 @@ def flair():
         print("Slides END!!!")
 
 
-def display_slides() -> None:
+def display_slides(start: int = 1) -> None:
     print("\x1b[2 q", end="")  # block cursor
     for n, (content, func) in enumerate(slides, start=1):
+        if n < start:
+            continue
         run(["clear", "-x"])
-        slidename = f"{NAME}.{func.__name__}"
+        slidename = f"{NAME}/{func.__name__}"
         progress = f"[{n}/{len(slides)}]"
         print(f"\x1b[30m{slidename:<{WIDTH - 10}}{progress:>10}\x1b[0m")
         print(content, end="")

@@ -1,0 +1,4 @@
+[Service]
+Type=oneshot
+ExecStart=%h/bin/calendar-notifier
+TimeoutStartSec=20s

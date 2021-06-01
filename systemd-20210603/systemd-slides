@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+import os
+import sys
+from pathlib import Path
+from shlex import quote
+from subprocess import PIPE, STDOUT, Popen
+
+from slideception import bash as _bash, display_slides, flair, format_slide, ipython, slide, wait
+
+
+def bash(history):
+    _bash(history=history, init=["PS1=$SHORTPS1"])
+def display_file(name: str, *, title = None, type = ""):
+    text = Path(name).read_text()
+    if title is None:
+        title = name
+    print(format_slide(f"## {title}\n```{type}\n{text}\n```"), end="")
+
+
+@slide
+def overview():
+    """Don't write that shell script!
+
+    Use **systemd** instead!
+
+    ## What you'll learn
+
+    * what systemd can do for you
+    * how to find all the documentation
+    """
+    pass
+
+
+@slide
+def systemd_project():
+    """systemd (the project)
+
+    “systemd is a suite of basic building blocks for a Linux system.”
+
+    * **service manager (systemd, `systemctl`, `systemd-run`)**
+    * logging daemon (journald, `journalctl`)
+    * ~~system configuration utilities (localectl, timedatectl, ...)~~
+    * ~~container tools (machinectl)~~
+    * ~~network configuration (systemd-networkd)~~
+    * ~~time synchronization (systemd-timesyncd)~~
+    * ~~DNS (systemd-resolved)~~
+    """
+    pass
+
+
+@slide
+def units():
+    """Units
+
+    **Units** are the basic building blocks that systemd uses.
+
+    ## Types of units
+
+    * **service** runs processes
+    * **timer**   activates another unit based on time
+    * **path**    activates another unit based on filesystem events
+    * **socket**  activates a service based on incoming connections
+    * **target**  groups/synchronizes other units
+    * …
+
+    ## Unit files
+
+    * “{name}.{type}” (vscode-daemon.service)
+    * ini-style
+    * complex search path (see systemd.unit(5))
+    """
+    pass
+
+
+@slide
+def unit_examples():
+    """Unit Examples
+
+    ## foobar.service
+
+    ```systemd
+    [Unit]
+    Documentation=https://example.com/foobar
+
+    [Service]
+    Type=oneshot
+    ExecStart=/usr/bin/foobar --hyphens
+    """
+    pass
+
+
+@slide
+def documentation():
+    """systemd’s Documentation
+
+    ## Man Pages
+    * CLI tools (systemctl(1), systemd-run(1))
+    * File types (systemd.unit(5), systemd.service(5))
+    * **Index of options: systemd.directives(7)**
+    * Options always have trailing “=”
+    * Full list: `man -k systemd`
+
+    ## “systemd for Administrators” Blog Series
+
+    [https://www.freedesktop.org/wiki/Software/systemd/](/)
+    """
+    bash(history=["man systemd.directives"])
+
+
+@slide
+def unit_examples():
+    """Unit Examples"""
+    display_file("calendar-notifier.service", type="systemd")
+    display_file("calendar-notifier.timer", type="systemd")
+    wait()
+    display_file("calendar-notifier-2.timer", type="systemd", title="calendar-notifier.timer (advanced)")
+    wait()
+    bash(history=["systemd-analyze calendar 'Mon-Fri *:0/5:0'"])
+
+
+@slide
+def remember():
+    """Remember
+
+    * systemd.directives(7)
+    * `systemctl status`
+    * `systemctl cat`
+    * `systemctl list-dependencies`
+    * `--user` flag
+    * `systemd-analyze`
+    * **systemd and friends** Workplace group
+    """
+    pass
+
+
+with flair():
+    os.chdir(Path(sys.argv[0]).parents[0])
+    display_slides(int(sys.argv[1]) if len(sys.argv) >= 2 else 1)
