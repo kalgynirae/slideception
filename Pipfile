@@ -7,6 +7,11 @@ name = "pypi"
 slideception = {editable = true, path = "."}
 
 [dev-packages]
+isort = "*"
+black = "*"
 
 [requires]
 python_version = "3.9"
+
+[pipenv]
+allow_prereleases = true

@@ -174,7 +174,6 @@ class TerminalRenderer(BaseRenderer):
         for func in [
             partial(re.sub, r"([\w.-]+\(\d\))", fr"{MANPAGE}\1{RESET}"),
             partial(re.sub, r"({\w+})", fr"{REPLACEMENT}\1{RESET}"),
-            lambda s: s.replace("...", "…"),
         ]:
             content = func(content)
         return content
@@ -201,20 +200,27 @@ class TerminalRenderer(BaseRenderer):
             return f"\x1b[35;1m{self.render_inner(token)}\x1b[39;22m\n\n"
 
     def render_quote(self, token):
-        return f"\x1b[90m{self.render_inner(token)}\x1b[99m"
+        return f"\x1b[90m{self.render_inner(token)}\x1b[39m"
 
     def render_paragraph(self, token):
         return f"{self.render_inner(token)}\n\n"
 
     def render_block_code(self, token):
         code = self.render_inner(token)
+        box = True
+        if token.language and token.language.endswith(".nobox"):
+            box = False
+            token.language = token.language[: -len(".nobox")]
         if token.language == "systemd":
             code = highlight_systemd(code)
         elif token.language:
             lexer = get_lexer_by_name(token.language)
             formatter = TerminalTrueColorFormatter(style=Kalgykai)
             code = highlight(code, lexer, formatter)
-        return boxing(code, style="double-single", padding=0).lstrip("\n") + "\n"
+        if box:
+            return boxing(code, style="double-single", padding=0).lstrip("\n") + "\n"
+        else:
+            return code
 
     def render_list(self, token):
         return f"{self.render_inner(token)}\n"
@@ -274,16 +280,18 @@ def flair():
         print("Slides END!!!")
 
 
-def display_slides(start: int = 1) -> None:
+def display_slides(start: Optional[int] = None, only_one: bool = False) -> None:
     print("\x1b[2 q", end="")  # block cursor
     for n, (content, func) in enumerate(slides, start=1):
-        if n < start:
+        if start is not None and n < start:
             continue
         run(["clear", "-x"])
         slidename = f"{NAME}/{func.__name__}"
         progress = f"[{n}/{len(slides)}]"
         print(f"\x1b[30m{slidename:<{WIDTH - 10}}{progress:>10}\x1b[0m")
         print(content, end="")
+        if only_one:
+            break
         if func.__code__.co_code != b"d\x01S\x00":
             wait()
             func()

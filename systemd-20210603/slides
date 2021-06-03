@@ -1,0 +1,417 @@
+#!/usr/bin/env python3
+# vim:set tw=71 cc=+1:
+import argparse
+import os
+import sys
+from pathlib import Path
+from shlex import quote
+from subprocess import PIPE, STDOUT, Popen
+
+from slideception import bash as _bash
+from slideception import display_slides, flair, format_slide, ipython, slide, wait
+
+
+def bash(history):
+    _bash(history=history, init=["PS1=$SHORTPS1"])
+
+
+def display_file(name: str, *, title=None, type=""):
+    text = Path(name).read_text()
+    if title is None:
+        title = name
+    print(format_slide(f"## {title}\n```{type}\n{text}\n```"), end="")
+
+
+def make_outline(n: int):
+    items = [
+        "scope of talk",
+        "systemd’s core concepts",
+        "useful features and examples",
+        "testing and debugging",
+    ]
+    formatted_items = "\n".join(
+        (
+            f"* **» `{item}` «**"
+            if i == n
+            else f"* ~~✔ {item} ✔~~"
+            if i < n
+            else f"* ~~⬝ {item} ⬝~~"
+        )
+        for i, item in enumerate(items, start=1)
+    )
+
+    def outline_slide():
+        """foo"""
+        pass
+
+    outline_slide.__name__ = f"outline_{n}"
+    outline_slide.__doc__ = f"Outline\n\n{formatted_items}"
+    return outline_slide
+
+
+@slide
+def sizing():
+    """[size test]
+
+    Use this slide to ensure the terminal window is sized correctly.
+    ```text.nobox
+                                     ˄
+                                     |
+                                     |
+                                     |
+                                     |
+                                     |
+                                     |
+    ˂--------------------------------+--------------------------------˃
+                                     |
+                                     |
+                                     |
+                                     |
+                                     |
+                                     |
+                                     ˅
+    ```
+    """
+
+
+@slide
+def title():
+    """Don't write that shell script!
+
+    *Use **systemd** instead!*
+
+    ## Goals
+
+    * Learn what systemd can do for you
+    * Learn how to find the documentation
+    * Learn how to debug stuff
+    """
+    pass
+
+
+slide(make_outline(1))
+
+
+@slide
+def scope_of_talk():
+    """systemd (the project) is very big
+
+    “systemd is a suite of basic building blocks for a Linux system.”
+    (https://systemd.io/)
+
+    * **service manager (systemd, `systemctl`, `systemd-run`)**
+    * logging daemon (journald, `journalctl`)
+    * ~~container management (machinectl)~~
+    * ~~system configuration utilities (localectl, timedatectl, …)~~
+    * ~~time synchronization (systemd-timesyncd)~~
+    * ~~network configuration (systemd-networkd)~~
+    * ~~DNS (systemd-resolved)~~
+    """
+    pass
+
+
+slide(make_outline(2))
+
+
+@slide
+def units():
+    """Units
+
+    **Units** are the basic building blocks that systemd uses.
+
+    ## Types of units
+
+    * **service** runs processes
+    * **timer**   activates another unit based on time
+    * **path**    activates another unit based on filesystem events
+    * **socket**  activates a service based on incoming connections
+    * **target**  groups/synchronizes other units
+    * …
+
+    ## Unit files
+
+    * “{name}.{type}” (vscode-daemon.service)
+    * ini-style
+    * complex search path
+    """
+    pass
+
+
+@slide
+def unit_example():
+    """Unit Example
+
+    ## foobar.service
+
+    ```systemd
+    [Unit]
+    Documentation=https://example.com/foobar
+
+    [Service]
+    Type=oneshot
+    ExecStart=/usr/bin/foobar --hyphens
+    ```
+
+    * use `Description=` sparingly
+    """
+    pass
+
+
+@slide
+def unit_search_path():
+    """Unit Search Path
+
+    A unit is loaded from the first that exists:
+
+    * /etc/systemd/system/*
+    * /run/systemd/system/*
+    * /usr/lib/systemd/system/*
+
+    “Drop-in” configs can override specific options:
+
+    * {path}/{unit}.d/*.conf
+    * create easily with `systemctl edit {unit}`
+    * see combined config with `systemctl cat {unit}`
+
+    Documentation in systemd.unit(5)
+    """
+    pass
+
+
+@slide
+def unit_example():
+    """Unit Drop-In Example
+
+    ## foobar.service
+
+    ```systemd
+    [Unit]
+    Documentation=https://example.com/foobar
+
+    [Service]
+    Type=oneshot
+    ExecStart=/usr/bin/foobar --hyphens
+    ```
+    """
+    bash(history=["systemctl edit foobar.service"])
+
+
+@slide
+def dependencies():
+    """Dependencies
+
+    * requirement dependencies: `Wants=`, `Requires=`
+    * ordering dependencies: `Before=`, `After=` (rarely useful alone)
+    * ~~(other, more specific types)~~
+
+    By default, everything would start simultaneously.
+
+    ```systemd
+    [Unit]
+    Wants=webserver.service
+    After=webserver.service
+    ```
+
+    Documentation in systemd.unit(5)
+    """
+    pass
+
+
+@slide
+def enabling_and_disabling():
+    """Enabling and Disabling Units
+
+    * `systemctl enable {unit}` creates symlinks based on `[Install]`
+    * `disable` deletes the symlinks
+
+    ```systemd
+    [Install]
+    WantedBy=multi-user.target
+    ```
+
+    Units without `[Install]` can’t be enabled
+
+    Documentation in systemd.unit(5)
+    """
+    pass
+
+
+@slide
+def unit_lifecycle():
+    """Unit Lifecycle
+
+    ## High-level states
+    ```
+    inactive → activating → active → deactivating ↵
+    ```
+    * also *failed*
+    * Granular sub-states vary by unit type
+
+    **Don't:** depend on specific state names
+    **Do:** use unit dependencies or `systemctl is-active {unit}`
+
+    Documentation in systemctl(1) and systemd.unit(5)
+    """
+    bash(history=["systemctl --state=help |l"])
+
+
+@slide
+def starting_stopping():
+    """Starting/Stopping Units
+
+    `systemctl start {unit}`
+    * `--wait`, `--no-block`
+    * `--show-transaction`
+
+    `systemctl stop {unit}`
+    `systemctl restart {unit}`
+    `systemctl reload {unit}`
+
+    {unit} as a glob pattern matches only *loaded* units!
+
+    Documentation in systemctl(1)
+    """
+    pass
+
+
+@slide
+def service_types():
+    """Types of Services
+
+    Long-running:
+
+    * **simple** (*default*)
+    * **exec** (*better*)
+    * **forking**
+    * **notify** (*best*) — service knows about systemd
+    * …
+
+    Short-lived:
+    * **oneshot**
+
+    Type defines how the service transitions from **activating**
+
+    Documentation in systemd.service(5)
+    """
+    pass
+
+
+@slide
+def service_lifecycle():
+    """Service Lifecycle
+
+    * `ExecCondition=`
+    * `ExecStartPre=`
+    * `ExecStart=` <-- main service process
+    * `ExecStartPost=`
+    * `ExecReload=`
+    * `ExecStop=`
+    * `ExecStopPost=`
+
+    Most can be specified multiple times!
+
+    Documentation in systemd.service(5)
+    """
+    pass
+
+
+@slide
+def template_units():
+    """Template Units
+
+    Units are singletons: exactly one `foo.service`
+
+    Documentation in systemd.unit(5)
+    """
+    pass
+
+
+@slide
+def documentation():
+    """systemd’s Documentation
+
+    ## Man Pages
+    * CLI tools (systemctl(1), systemd-run(1))
+    * File types (systemd.unit(5), systemd.service(5))
+    * **Index of options: systemd.directives(7)**
+    * Options always have trailing “=”
+    * Full list: `man -k systemd`
+
+    ## “systemd for Administrators” Blog Series
+
+    [https://www.freedesktop.org/wiki/Software/systemd/](/)
+    """
+    bash(history=["man systemd.directives"])
+
+
+slide(make_outline(3))
+
+
+@slide
+def timer_examples_1():
+    """Timer Examples (1/2)
+
+    ## calendar-notifier.service
+
+    ```systemd
+    [Service]
+    Type=oneshot
+    ExecStart=%h/bin/calendar-notifier
+    TimeoutStartSec=20s
+    ```
+
+    ## calendar-notifier.timer
+
+    ```systemd
+    [Timer]
+    OnCalendar=minutely
+    ```
+    """
+    pass
+
+
+@slide
+def timer_examples_2():
+    """Timer Examples (2/2)
+
+    ## calendar-notifier.timer (advanced)
+
+    ```systemd
+    [Timer]
+    OnStartupSec=15m
+    OnUnitActiveSec=5m
+    ```
+
+    ## calendar-notifier.timer (advanced calendar)
+
+    ```systemd
+    [Timer]
+    OnCalendar=Mon-Fri *:0/5
+    ```
+    """
+    wait()
+    bash(history=["systemd-analyze calendar 'Mon-Fri *:0/5'"])
+
+
+@slide
+def remember():
+    """Remember
+
+    * systemd.directives(7)
+    * `systemctl cat`
+    * `systemctl list-dependencies`
+    * `--user` flag (for most CLIs)
+    * `systemd-analyze`
+    * **systemd and friends** Workplace group if you need help
+    """
+    pass
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("start", default=None, nargs="?", type=int)
+    parser.add_argument("--only", action="store_true", dest="only_one")
+    args = parser.parse_args()
+    with flair():
+        os.chdir(Path(__file__).parents[0])
+        display_slides(**vars(args))
